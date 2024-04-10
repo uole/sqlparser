@@ -25,8 +25,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/xwb1989/sqlparser/dependency/querypb"
-	"github.com/xwb1989/sqlparser/dependency/sqltypes"
+	"github.com/uole/sqlparser/dependency/querypb"
+	"github.com/uole/sqlparser/dependency/sqltypes"
 )
 
 // Instructions for creating new types: If a type
@@ -289,7 +289,7 @@ func (node *Select) SetLimit(limit *Limit) {
 
 // Format formats the node.
 func (node *Select) Format(buf *TrackedBuffer) {
-	buf.Myprintf("select %v%s%s%s%v from %v%v%v%v%v%v%s",
+	buf.Myprintf("SELECT %v%s%s%s%v FROM %v%v%v%v%v%v%s",
 		node.Comments, node.Cache, node.Distinct, node.Hints, node.SelectExprs,
 		node.From, node.Where,
 		node.GroupBy, node.Having, node.OrderBy,
@@ -478,8 +478,8 @@ type Insert struct {
 
 // DDL strings.
 const (
-	InsertStr  = "insert"
-	ReplaceStr = "replace"
+	InsertStr  = "INSERT"
+	ReplaceStr = "REPLACE"
 )
 
 // Format formats the node.
@@ -528,7 +528,7 @@ type Update struct {
 
 // Format formats the node.
 func (node *Update) Format(buf *TrackedBuffer) {
-	buf.Myprintf("update %v%v set %v%v%v%v",
+	buf.Myprintf("UPDATE %v%v SET %v%v%v%v",
 		node.Comments, node.TableExprs,
 		node.Exprs, node.Where, node.OrderBy, node.Limit)
 }
@@ -562,11 +562,11 @@ type Delete struct {
 
 // Format formats the node.
 func (node *Delete) Format(buf *TrackedBuffer) {
-	buf.Myprintf("delete %v", node.Comments)
+	buf.Myprintf("DELETE %v", node.Comments)
 	if node.Targets != nil {
 		buf.Myprintf("%v ", node.Targets)
 	}
-	buf.Myprintf("from %v%v%v%v%v", node.TableExprs, node.Partitions, node.Where, node.OrderBy, node.Limit)
+	buf.Myprintf("FROM %v%v%v%v%v", node.TableExprs, node.Partitions, node.Where, node.OrderBy, node.Limit)
 }
 
 func (node *Delete) walkSubtree(visit Visit) error {
@@ -600,9 +600,9 @@ const (
 // Format formats the node.
 func (node *Set) Format(buf *TrackedBuffer) {
 	if node.Scope == "" {
-		buf.Myprintf("set %v%v", node.Comments, node.Exprs)
+		buf.Myprintf("SET %v%v", node.Comments, node.Exprs)
 	} else {
-		buf.Myprintf("set %v%s %v", node.Comments, node.Scope, node.Exprs)
+		buf.Myprintf("SET %v%s %v", node.Comments, node.Scope, node.Exprs)
 	}
 }
 
@@ -634,7 +634,7 @@ func (node *DBDDL) Format(buf *TrackedBuffer) {
 	case DropStr:
 		exists := ""
 		if node.IfExists {
-			exists = " if exists"
+			exists = " IF EXISTS"
 		}
 		buf.WriteString(fmt.Sprintf("%s database%s %v", node.Action, exists, node.DBName))
 	}
@@ -1338,9 +1338,9 @@ type ShowFilter struct {
 // Format formats the node.
 func (node *ShowFilter) Format(buf *TrackedBuffer) {
 	if node.Like != "" {
-		buf.Myprintf("like '%s'", node.Like)
+		buf.Myprintf("LIKE '%s'", node.Like)
 	} else {
-		buf.Myprintf("where %v", node.Filter)
+		buf.Myprintf("WHERE %v", node.Filter)
 	}
 }
 
@@ -1870,8 +1870,8 @@ type Where struct {
 
 // Where.Type
 const (
-	WhereStr  = "where"
-	HavingStr = "having"
+	WhereStr  = "WHERE"
+	HavingStr = "HAVING"
 )
 
 // NewWhere creates a WHERE or HAVING clause out
@@ -2148,8 +2148,8 @@ type RangeCond struct {
 
 // RangeCond.Operator
 const (
-	BetweenStr    = "between"
-	NotBetweenStr = "not between"
+	BetweenStr    = "BETWEEN"
+	NotBetweenStr = "NOT BETWEEN"
 )
 
 // Format formats the node.
@@ -2321,7 +2321,7 @@ func (node *SQLVal) Format(buf *TrackedBuffer) {
 	case BitVal:
 		buf.Myprintf("B'%s'", []byte(node.Val))
 	case ValArg:
-		buf.WriteArg(string(node.Val))
+		buf.WriteArg(string("?"))
 	default:
 		panic("unexpected")
 	}
@@ -3003,7 +3003,7 @@ type When struct {
 
 // Format formats the node.
 func (node *When) Format(buf *TrackedBuffer) {
-	buf.Myprintf("when %v then %v", node.Cond, node.Val)
+	buf.Myprintf("WHEN %v THEN %v", node.Cond, node.Val)
 }
 
 func (node *When) walkSubtree(visit Visit) error {
@@ -3022,7 +3022,7 @@ type GroupBy []Expr
 
 // Format formats the node.
 func (node GroupBy) Format(buf *TrackedBuffer) {
-	prefix := " group by "
+	prefix := " GROUP BY "
 	for _, n := range node {
 		buf.Myprintf("%s%v", prefix, n)
 		prefix = ", "
@@ -3043,7 +3043,7 @@ type OrderBy []*Order
 
 // Format formats the node.
 func (node OrderBy) Format(buf *TrackedBuffer) {
-	prefix := " order by "
+	prefix := " ORDER BY "
 	for _, n := range node {
 		buf.Myprintf("%s%v", prefix, n)
 		prefix = ", "
@@ -3067,8 +3067,8 @@ type Order struct {
 
 // Order.Direction
 const (
-	AscScr  = "asc"
-	DescScr = "desc"
+	AscScr  = "ASC"
+	DescScr = "DESC"
 )
 
 // Format formats the node.
@@ -3107,7 +3107,7 @@ func (node *Limit) Format(buf *TrackedBuffer) {
 	if node == nil {
 		return
 	}
-	buf.Myprintf(" limit ")
+	buf.Myprintf(" LIMIT ")
 	if node.Offset != nil {
 		buf.Myprintf("%v, ", node.Offset)
 	}
@@ -3130,7 +3130,7 @@ type Values []ValTuple
 
 // Format formats the node.
 func (node Values) Format(buf *TrackedBuffer) {
-	prefix := "values "
+	prefix := "VALUES "
 	for _, n := range node {
 		buf.Myprintf("%s%v", prefix, n)
 		prefix = ", "
